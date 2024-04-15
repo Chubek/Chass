@@ -7,10 +7,7 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
-// NOTE: Preprocess these with allocpp.pl
-/*=> alloc crypto_heap, crypto_alloc, crypto_realloc, crypto_dump */
-/*=> hashfunc crypto_heap_hashfunc */
-
+#include "chass.h"
 
 void initialize_libcrypto() {
     ERR_load_crypto_strings();
