@@ -11,8 +11,6 @@
 /*=> alloc crypto_heap, crypto_alloc, crypto_realloc, crypto_dump */
 /*=> hashfunc crypto_heap_hashfunc */
 
-#define SYMMETRIC_KEY_LENGTH 32
-#define IV_LENGTH 16
 
 void initialize_libcrypto() {
     ERR_load_crypto_strings();
@@ -40,7 +38,7 @@ int encrypt_symmetric_key(const String *symmetric_key, EVP_PKEY *public_key, Str
 }
 
 int encrypt_data(const String *plaintext, const String *key,
-                 const String *iv, const String ciphertext.buffer) {
+                 const String *iv, const String *ciphertext) {
     EVP_CIPHER_CTX *ctx;
     int len;
     int ciphertext_temp_len;
@@ -55,7 +53,7 @@ int encrypt_data(const String *plaintext, const String *key,
         return 0;
     }
     
-    if(1 != EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv)) {
+    if(1 != EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key.buffer, iv.buffer)) {
         EVP_CIPHER_CTX_free(ctx);
         return 0;
     }
