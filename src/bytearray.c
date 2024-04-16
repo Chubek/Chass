@@ -11,6 +11,14 @@
 #define BYTEARRAY_ALLOC_STEP 1024
 #endif
 
+#ifndef MAX_ADD
+#define MAX_ADD 16
+#endif
+
+#define MODE_INIT -1
+#define MODE_WRITE 1
+#define MODE_SCAN 2
+
 /*!(alloc-pp ba_heap)!*/
 
 struct ByteArray {
@@ -70,17 +78,19 @@ uint8_t *read_from_bytearray(ByteArray *array, uint8_t **read,
 }
 
 ByteArray *read_filepath_into_bytearray(char *path) {
+  FILE *stream = NULL;
+
   if (path == NULL)
+    stream = stdin;
+  else
+    stream = fopen(path, "r");
+
+  if (stream == NULL)
     return NULL;
 
   ByteArray *array = create_bytearray();
 
   if (array == NULL)
-    return NULL;
-
-  FILE *stream = fopen(path, "r");
-
-  if (stream == NULL)
     return NULL;
 
   if (fseek(stream, 0, SEEK_END) < 0) {
@@ -110,10 +120,24 @@ ByteArray *read_filepath_into_bytearray(char *path) {
   return array;
 }
 
-#define MAX_ADD 16
-#define MODE_INIT -1
-#define MODE_WRITE 1
-#define MODE_SCAN 2
+bool write_bytearray_to_filepath(ByteArray *array, char *path) {
+  FILE *stream = NULL;
+
+  if (path == NULL)
+    stream = stdout;
+  else
+    stream = fopen(path, "w");
+
+  if (stream == NULL)
+    return false;
+
+  if (fwrite(array->buffer, array->size, sizeof(uint8_t), stream) !=
+      array->size)
+    return false;
+
+  fclose(stream);
+  return true;
+}
 
 void fsw_bytearray(ByteArray *array, const char *fmt, ...) {
   va_list ap;
@@ -130,55 +154,52 @@ void fsw_bytearray(ByteArray *array, const char *fmt, ...) {
       case 'i':
         if (mode == MODE_WRITE) {
           intmax_t i = va_arg(ap, intmax_t);
-                                                uint8_t add[ADD_MAX
-        }
-        = {0};
-        memmove(&add[0], &i, sizeof(intmax_t));
-        append_to_bytearray(array, &add[0], sizeof(intmax_t));
-      }
-      else {
-        intmax_t *i = va_arg(ap, intmax_t *);
-        read_from_bytearray(array, (uint8_t **)i, sizeof(intmax_t));
-        *i = byte_to_int(*i, sizeof(intmax_t));
-      }
-      break;
-    case 's':
-      if (mode == MODE_WRITE) {
-        uint8_t *s = va_arg(ap, uint8_t *);
-        size_t s_len = u8_strlen(s);
-        append_to_bytearray(array, s, s_len);
-        break;
-
-      } else {
-        uint8_t **s = va_arg(ap, uint8_t **);
-        size_t s_len = 0;
-        if (*(fmt + 1) == 'n') {
-          fmt++;
-          s_len = va_arg(ap, size_t);
+          uint8_t add[MAX_ADD] = {0};
+          memmove(&add[0], &i, sizeof(intmax_t));
+          append_to_bytearray(array, &add[0], sizeof(intmax_t));
         } else {
-          s_len = u8_strlen(*s);
+          intmax_t *i = va_arg(ap, intmax_t *);
+          read_from_bytearray(array, (uint8_t **)i, sizeof(intmax_t));
+          *i = bytes_to_int(*i, sizeof(intmax_t));
         }
-        read_from_bytearray(array, s, s_len);
+        break;
+      case 's':
+        if (mode == MODE_WRITE) {
+          uint8_t *s = va_arg(ap, uint8_t *);
+          size_t s_len = u8_strlen(s);
+          append_to_bytearray(array, s, s_len);
+          break;
+
+        } else {
+          uint8_t **s = va_arg(ap, uint8_t **);
+          size_t s_len = 0;
+          if (*(fmt + 1) == 'n') {
+            fmt++;
+            s_len = va_arg(ap, size_t);
+          } else {
+            s_len = u8_strlen(*s);
+          }
+          read_from_bytearray(array, s, s_len);
+        }
+        break;
+      case 'S':
+        if (mode == MODE_WRITE) {
+          String *s = va_arg(ap, String *);
+          append_to_bytearray(array, s->buffer, s->size);
+        } else {
+          String *s = va_arg(ap, String *);
+          read_from_bytearray(array, &s->buffer, s->size);
+        }
+        break;
+      default:
+        add_byte_to_bytearray(array, fc);
+        add_byte_to_bytearray(array, disc);
+        break;
       }
-      break;
-    case 'S':
-      if (mode == MODE_WRITE) {
-        String *s = va_arg(ap, String *);
-        append_to_bytearray(array, s->buffer, s->size);
-      } else {
-        String *s = va_arg(ap, String *);
-        read_from_bytearray(array, &s->buffer, s->size);
-      }
-      break;
-    default:
-      add_byte_to_bytearray(array, fc);
-      add_byte_to_bytearray(array, disc);
-      break;
     }
+
+    add_byte_to_bytearray(array, fc);
   }
 
-  add_byte_to_bytearray(array, fc);
-}
-
-va_end(ap);
+  va_end(ap);
 }
