@@ -10,7 +10,7 @@
 #define BYTEARRAY_ALLOC_STEP 1024
 #endif
 
-/*!(alloc-pp barr_heap)!*/
+/*!(alloc-pp ba_heap)!*/
 
 struct ByteArray {
   uint8_t *buffer;
@@ -19,7 +19,7 @@ struct ByteArray {
 };
 
 ByteArray *create_bytearray(void) {
-  ByteArray *array = (ByteArray *)barr_heap_alloc_notrace(sizeof(ByteArray));
+  ByteArray *array = (ByteArray *)ba_heap_alloc_notrace(sizeof(ByteArray));
 
   if (array == NULL)
     return NULL;
@@ -27,6 +27,22 @@ ByteArray *create_bytearray(void) {
   array->buffer = NULL;
   array->size = 0;
   array->cursor = 0;
+}
+
+ByteArray *append_to_bytearray_buffer(ByteArray *array, uint8_t *add,
+                                      size_t add_size) {
+  if (array->size <= add_size) {
+    void *new_ptr =
+        ba_heap_realloc(array->buffer, array->size + BYTEARRAY_ALLOC_STEP);
+    if (new_ptr == NULL)
+      return NULL;
+    bytearray->buffer = new_ptr;
+    bytearray->size += BYTEARRAY_ALLOC_STEP;
+  }
+
+  memmove(&array->buffer[array->cursor], add, add_size);
+  array->cursor += add_size - 1;
+  return array;
 }
 
 ByteArray *read_filepath_into_bytearray(char *path) {
