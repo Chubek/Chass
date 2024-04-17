@@ -81,6 +81,78 @@ EVP_CIPHER_CTX_free(ctx);
 return true;
 }
 
+bool decrypt_symmetric_key(const String *encrypted_key, EVP_PKEY *private_key,
+                           String *decrypted_key) {
+  EVP_PKEY_CTX *ctx;
+  if (!(ctx = EVP_PKEY_CTX_new(private_key, NULL)))
+    return false;
+  if (EVP_PKEY_decrypt_init(ctx) <= 0)
+    return false;
+  if (EVP_PKEY_decrypt(ctx, NULL, &decrypted_key->len, encrypted_key->buffer,
+                       encrypted_key->len) <= 0)
+    return false;
+  if (!(decrypted_key->buffer = crypto_alloc(decrypted_key->len)))
+    return false;
+  if (EVP_PKEY_decrypt(ctx, decrypted_key->buffer, &decrypted_key->len,
+                       encrypted_key->buffer, encrypted_key->len) <= 0)
+    return false;
+  EVP_PKEY_CTX_free(ctx);
+  return true;
+}
+
+bool decrypt_data(const String *ciphertext, const String *key, const String *iv,
+                  String *plaintext) {
+  EVP_CIPHER_CTX *ctx;
+  int len;
+  int plaintext_temp_len;
+
+  plaintext->len = 0;
+
+  if (!(plaintext->buffer = (uint8_t *)crypto_alloc(ciphertext->len)))
+    return false;
+
+  if (!(ctx = EVP_CIPHER_CTX_new()))
+    return false;
+
+  if (1 != EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key->buffer,
+                              iv->buffer)) {
+    EVP_CIPHER_CTX_free(ctx);
+    return false;
+  }
+
+  if (1 != EVP_DecryptUpdate(ctx, plaintext->buffer, &len, ciphertext->buffer,
+                             ciphertext->len)) {
+    EVP_CIPHER_CTX_free(ctx);
+    return false;
+  }
+  plaintext->len = len;
+
+  if (1 != EVP_DecryptFinal_ex(ctx, plaintext->buffer + len, &len)) {
+    EVP_CIPHER_CTX_free(ctx);
+    return false;
+  }
+  plaintext->len += len;
+
+  EVP_CIPHER_CTX_free(ctx);
+
+  return true;
+}
+
+EVP_PKEY *load_ssh_public_key(const char *file_path) {
+  EVP_PKEY *pkey = NULL;
+  FILE *fp = fopen(file_path, "r");
+  if (fp == NULL)
+    return NULL;
+
+  pkey = PEM_read_PUBKEY(fp, NULL, NULL, NULL);
+  fclose(fp);
+
+  if (pkey == NULL)
+    ERR_print_errors_fp(stderr);
+
+  return pkey;
+}
+
 EVP_PKEY *load_ssh_private_key(const char *file_path) {
   EVP_PKEY *pkey = NULL;
   FILE *fp = fopen(file_path, "r");
