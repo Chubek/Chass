@@ -1,5 +1,6 @@
 #include <ctype.h>
 #include <limits.h>
+#include <stdarg.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -39,6 +40,14 @@ void safe_free(void **ptr) {
   }
 }
 
+void error_out(const char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  vfprintf(stderr, fmt, ap);
+  va_end(ap);
+  exit(EXIT_FAILURE);
+}
+
 uint8_t *read_file(const uint8_t *filename) {
   FILE *file = fopen(filename, "rb");
   if (!file)
@@ -64,16 +73,6 @@ void debug_print(const uint8_t *msg) {
 #ifdef DEBUG
   fprintf(stderr, "DEBUG: %s\n", msg);
 #endif
-}
-
-void load_config(const uint8_t *filename) {
-  uint8_t *file_contents = read_file(filename);
-  if (!file_contents)
-    return;
-
-  // TODO: Implement
-
-  safe_free((void **)&file_contents);
 }
 
 intmax_t bytes_to_int(uint8_t *bytes, size_t size, bool be) {
