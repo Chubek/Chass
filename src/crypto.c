@@ -9,13 +9,13 @@
 
 #include "chass.h"
 
-void initialize_libcrypto() {
+void initialize_libcrypto(void) {
   ERR_load_crypto_strings();
   OpenSSL_add_all_algorithms();
   OPENSSL_config(NULL);
 }
 
-void cleanup_libcrypto() {
+void cleanup_libcrypto(void) {
   EVP_cleanup();
   CRYPTO_cleanup_all_ex_data();
   ERR_free_strings();
@@ -30,13 +30,13 @@ int encrypt_symmetric_key(const String *symmetric_key, EVP_PKEY *public_key,
     return 0;
   if (EVP_PKEY_encrypt_init(ctx) <= 0)
     return 0;
-  if (EVP_PKEY_encrypt(ctx, NULL, &encrypted_key.len, symmetric_key.buffer,
-                       symmetric_key.len) <= 0)
+  if (EVP_PKEY_encrypt(ctx, NULL, &encrypted_key->len, symmetric_key->buffer,
+                       symmetric_key->len) <= 0)
     return 0;
-  if (!(encrypted_key.buffer = crypto_alloc(encrypted_key.len)))
+  if (!(encrypted_key->buffer = crypto_alloc(encrypted_key->len)))
     return 0;
-  if (EVP_PKEY_encrypt(ctx, *encrypted_key.buffer, encrypted_key.len,
-                       symmetric_key.buffer, symmetric_key.len) <= 0)
+  if (EVP_PKEY_encrypt(ctx, *encrypted_key->buffer, encrypted_key->len,
+                       symmetric_key->buffer, symmetric_key->len) <= 0)
     return 0;
   EVP_PKEY_CTX_free(ctx);
   return 1;
@@ -60,7 +60,7 @@ int encrypt_data(const String *plaintext, const String *key, const String *iv,
   }
 
   if (1 !=
-      EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key.buffer, iv.buffer)) {
+      EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key->buffer, iv->buffer)) {
     EVP_CIPHER_CTX_free(ctx);
     return 0;
   }
