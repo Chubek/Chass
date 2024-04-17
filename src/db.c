@@ -85,7 +85,7 @@ void deserialize_hashtbl(Hashtbl *tbl) {
 
   char magic_sig[MAGIC_SIG_SIZE + 1] = {0};
   size_t num_buckets = 0;
-  fws_bytearray(tbl->sercon, "&s&i", &magic_sig[0], MAGIC_SIG_SIZE,
+  fws_bytearray(tbl->sercon, "&sn&i", &magic_sig[0], MAGIC_SIG_SIZE,
                 &num_buckets);
 
   if (strncmp(&magic_sig, MAGIC_SIG, MAGIC_SIG_SIZE) != 0)
