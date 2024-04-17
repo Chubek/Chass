@@ -60,7 +60,7 @@ void serialize_hashtbl(Hashtbl *tbl) {
   tbl->sercon = create_bytearray();
 
   if (tbl->sercon == NULL)
-	  error_out("Error: Can't create bytearray");
+    error_out("Error: Can't create bytearray");
 
   fws_bytearray(tbl->sercon, "%S%i", MAGIC_SIG, MAX_BUCKET);
 
@@ -106,8 +106,7 @@ void deserialize_hashtbl(Hashtbl *tbl) {
       *current_p = current = db_heap_alloc_notrace(sizeof(Item));
       size_t num_bucket_neg = 0;
       while (true) {
-        fws_bytearray(tbl->sercon, "&s&s&i", &key, &value,
-                      &num_bucket_neg);
+        fws_bytearray(tbl->sercon, "&s&s&i", &key, &value, &num_bucket_neg);
         current->key = key;
         current->value = value;
         if (num_bucket_neg == -num_bucket)

@@ -200,10 +200,9 @@ void fsw_bytearray(ByteArray *array, const char *fmt, ...) {
     }
 
     if (mode != MODE_SCAN)
-	    add_byte_to_bytearray(array, fc);
-    else 
-	    array->read_cursor++;
-
+      add_byte_to_bytearray(array, fc);
+    else
+      array->read_cursor++;
   }
 
   va_end(ap);
