@@ -152,6 +152,7 @@ void fsw_bytearray(ByteArray *array, const char *fmt, ...) {
 
       switch (disc) {
       case 'i':
+      case 'I':
         if (mode == MODE_WRITE) {
           intmax_t i = va_arg(ap, intmax_t);
           uint8_t add[MAX_ADD] = {0};
@@ -160,7 +161,7 @@ void fsw_bytearray(ByteArray *array, const char *fmt, ...) {
         } else {
           intmax_t *i = va_arg(ap, intmax_t *);
           read_from_bytearray(array, (uint8_t **)i, sizeof(intmax_t));
-          *i = bytes_to_int(*i, sizeof(intmax_t));
+          *i = bytes_to_int(*i, sizeof(intmax_t), disc == 'I');
         }
         break;
       case 's':
