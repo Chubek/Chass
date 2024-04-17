@@ -61,24 +61,23 @@ int encrypt_data(const String *plaintext, const String *key, const String *iv,
                          iv->buffer) != 1)
     EVP_CIPHER_CTX_free(ctx);
   return false;
-}
 
-if (EVP_EncryptUpdate(ctx, ciphertext->buffer, &len, plaintext->buffer,
-                      plaintext->len) != 1) {
+  if (EVP_EncryptUpdate(ctx, ciphertext->buffer, &len, plaintext->buffer,
+                        plaintext->len) != 1) {
+    EVP_CIPHER_CTX_free(ctx);
+    return false;
+  }
+  ciphertext->len = len;
+
+  if (1 != EVP_EncryptFinal_ex(ctx, ciphertext->buffer + len, &len)) {
+    EVP_CIPHER_CTX_free(ctx);
+    return false;
+  }
+  ciphertext->len += len;
+
   EVP_CIPHER_CTX_free(ctx);
-  return false;
-}
-ciphertext->len = len;
 
-if (1 != EVP_EncryptFinal_ex(ctx, ciphertext->buffer + len, &len)) {
-  EVP_CIPHER_CTX_free(ctx);
-  return false;
-}
-ciphertext->len += len;
-
-EVP_CIPHER_CTX_free(ctx);
-
-return true;
+  return true;
 }
 
 bool decrypt_symmetric_key(const String *encrypted_key, EVP_PKEY *private_key,
