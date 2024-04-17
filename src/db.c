@@ -33,7 +33,7 @@ Item *add_item(Hashtbl *tbl, String *key, String *value) {
   Item *node = (Item *)db_heap_alloc_notrace(sizeof(Item));
 
   if (node == NULL)
-    error_out("Erro: Allocation failed");
+    error_out("Error: Allocation failed");
 
   node->key = string_dup(key);
   node->value = string_dup(value);
@@ -58,6 +58,9 @@ Item *find_item(Hastbl *tbl, String *key) {
 
 void serialize_hashtbl(Hashtbl *tbl) {
   tbl->sercon = create_bytearray();
+
+  if (tbl->sercon == NULL)
+	  error_out("Error: Can't create bytearray");
 
   fws_bytearray(tbl->sercon, "%s%i\x04", MAGIC_SIG, MAX_BUCKET);
 
